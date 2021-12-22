@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+import "google/protobuf/wrappers.proto";
+
+package proto;
+
+service OrderManagement {
+  rpc getOrder(google.protobuf.StringValue) returns (Order);
+  //服务器端流
+  rpc searchOrders(google.protobuf.StringValue) returns (stream Order);
+  //客户端流
+  rpc updateOrders(stream Order) returns (google.protobuf.StringValue);
+  //双向流
+  rpc processOrders(stream google.protobuf.StringValue) returns (stream CombinedShipment);
+}
+
+message Order {
+  string id = 1;
+  repeated string items = 2; // repeated 表明这个字段可以出现0-n次
+  string description = 3;
+  float price = 4;
+  string destination = 5;
+}
+
+message CombinedShipment {
+  string id = 1;
+  string status = 2;
+  repeated Order ordersList = 3;
+}

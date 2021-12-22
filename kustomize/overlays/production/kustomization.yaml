@@ -1,0 +1,10 @@
+namePrefix: production-
+commonLabels:
+  variant: production
+  org: acmeCorporation
+commonAnnotations:
+  note: Hello, I am production!
+bases:
+  - ../../base
+patchesStrategicMerge: #其他需要单独更改的文件中的某些字段定义在这里，它会做一个merge，把变化的字段合并到base中
+  - deployment.yaml

@@ -1,25 +1,31 @@
-base可以理解为基础目录，kustomize build时，会指定base，kustomization.yaml中指定的更改规则将以base中的资源为模版创建出新的配置文件。
-
-`kustomize build` 会在标准输出中为每个资源对象贴上 `app: hello` 的标签
+演示环境，定义新的名称前缀以及一些不同的标签
 
 ```
-xing@xingdeMacBook-Pro kustomize % kustomize build base 
+xing@xingdeMacBook-Pro kustomize % kustomize build overlays/staging 
 apiVersion: v1
 data:
-  altGreeting: Good Morning!
-  enableRisky: "false"
+  altGreeting: Have a pineapple!
+  enableRisky: "true"
 kind: ConfigMap
 metadata:
+  annotations:
+    note: Hello, I am staging!
   labels:
     app: hello
-  name: the-map
+    org: acmeCorporation
+    variant: staging
+  name: staging-the-map
 ---
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    note: Hello, I am staging!
   labels:
     app: hello
-  name: the-service
+    org: acmeCorporation
+    variant: staging
+  name: staging-the-service
 spec:
   ports:
   - port: 8666
@@ -28,25 +34,37 @@ spec:
   selector:
     app: hello
     deployment: hello
+    org: acmeCorporation
+    variant: staging
   type: LoadBalancer
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    note: Hello, I am staging!
   labels:
     app: hello
-  name: the-deployment
+    org: acmeCorporation
+    variant: staging
+  name: staging-the-deployment
 spec:
   replicas: 3
   selector:
     matchLabels:
       app: hello
       deployment: hello
+      org: acmeCorporation
+      variant: staging
   template:
     metadata:
+      annotations:
+        note: Hello, I am staging!
       labels:
         app: hello
         deployment: hello
+        org: acmeCorporation
+        variant: staging
     spec:
       containers:
       - command:
@@ -58,18 +76,16 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: altGreeting
-              name: the-map
+              name: staging-the-map
         - name: ENABLE_RISKY
           valueFrom:
             configMapKeyRef:
               key: enableRisky
-              name: the-map
+              name: staging-the-map
         image: monopole/hello:1
         name: the-container
         ports:
         - containerPort: 8080
-
 ```
 
-`kustomize build base | kubectl apply -f -` 命令直接部署在集群中
-
+添加一个 ConfigMap 自定义把 base 中的 ConfigMap 中的 "*Good Morning!*" 变成 "Good Night!"

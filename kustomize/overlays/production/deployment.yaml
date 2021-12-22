@@ -1,0 +1,7 @@
+#创建一个生产环境的patch，定义增加副本数
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: the-deployment
+spec:
+  replicas: 10

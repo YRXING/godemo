@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 )
 
-//DataFile indicates the interface type  of data file
+//DataFile indicates the interface config  of data file
 //multiple read operations should be in order and cannot be repeated;
 //every data block is in the same size,if the data to be written exceeds this value,
 //the excess will be truncation

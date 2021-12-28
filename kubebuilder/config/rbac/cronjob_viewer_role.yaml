@@ -1,20 +1,20 @@
-# permissions for end users to view guestbooks.
+# permissions for end users to view cronjobs.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: guestbook-viewer-role
+  name: cronjob-viewer-role
 rules:
 - apiGroups:
-  - webapp.my.domain
+  - batch.tutorial.kubebuilder.io
   resources:
-  - guestbooks
+  - cronjobs
   verbs:
   - get
   - list
   - watch
 - apiGroups:
-  - webapp.my.domain
+  - batch.tutorial.kubebuilder.io
   resources:
-  - guestbooks/status
+  - cronjobs/status
   verbs:
   - get

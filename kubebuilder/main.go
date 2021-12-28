@@ -26,7 +26,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	webappv1 "godemo/api/v1"
+	batchv1 "godemo/api/v1"
 	"godemo/controllers"
 	// +kubebuilder:scaffold:imports
 )
@@ -39,7 +39,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
-	_ = webappv1.AddToScheme(scheme)
+	_ = batchv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -59,19 +59,23 @@ func main() {
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "9b351cf0.my.domain",
+		LeaderElectionID:   "9b351cf0.tutorial.kubebuilder.io",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	if err = (&controllers.GuestbookReconciler{
+	if err = (&controllers.CronJobReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Guestbook"),
+		Log:    ctrl.Log.WithName("controllers").WithName("CronJob"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Guestbook")
+		setupLog.Error(err, "unable to create controller", "controller", "CronJob")
+		os.Exit(1)
+	}
+	if err = (&batchv1.CronJob{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "CronJob")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

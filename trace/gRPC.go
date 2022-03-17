@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"strings"
+	"time"
 )
 
 /*
@@ -20,11 +21,25 @@ import (
 func ClientInterceptor(tracer opentracing.Tracer) grpc.UnaryClientInterceptor  {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-
-		span,_ := opentracing.StartSpanFromContext(ctx,"call gRPC",
-			opentracing.Tag{Key: string(ext.Component),Value: "gRPC"},
+		// 一个RPC调用的服务端的span和客户端的span构成ChildOf关系
+		var parentCtx opentracing.SpanContext
+		parentSpan := opentracing.SpanFromContext(ctx)
+		if parentSpan != nil {
+			parentCtx = parentSpan.Context()
+		}
+		span := tracer.StartSpan(
+			method,
+			opentracing.ChildOf(parentCtx),
+			opentracing.Tag{Key: string(ext.Component),Value: "gRPC Client"},
 			ext.SpanKindRPCClient,
 			)
+
+		//简单写法
+		//span,_ := opentracing.StartSpanFromContext(ctx,method,
+		//	opentracing.Tag{Key: string(ext.Component),Value: "gRPC"},
+		//	ext.SpanKindRPCClient,
+		//	)
+
 		defer span.Finish()
 
 		md,ok := metadata.FromOutgoingContext(ctx)
@@ -37,13 +52,48 @@ func ClientInterceptor(tracer opentracing.Tracer) grpc.UnaryClientInterceptor  {
 		//把span信息注册到MD这个carrier中去
 		err := tracer.Inject(span.Context(),opentracing.TextMap,MDReaderWriter{md})
 		if err != nil {
-			span.LogFields(log.String("call-error",err.Error()))
+			span.LogFields(log.String("inject span error: %v",err.Error()))
+		}
+
+		//调用远程方法
+		newCtx := metadata.NewOutgoingContext(ctx,md)
+		err = invoker(newCtx, method, req,reply,cc,opts...)
+		if err != nil {
+			log.Error(err)
 		}
 		return err
 	}
 
 }
 
+func ClientMain(serviceName,serverAddr string){
+	tracer,closer := NewTracer(serviceName)
+	defer closer.Close()
+
+	ctx,_ := context.WithTimeout(context.Background(),5*time.Second)
+	conn,err := grpc.DialContext(
+		ctx,
+		serverAddr,
+		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(ClientInterceptor(tracer)),
+		)
+	if err != nil {
+		log.Error(err)
+	}
+
+	defer conn.Close()
+
+	//.....gRPC客户端逻辑
+}
+
+func ServerMain(serviceName string)  {
+	tracer,closer := NewTracer(serviceName)
+	defer closer.Close()
+
+	s := grpc.NewServer(grpc.UnaryInterceptor(ServerInterceptor(tracer)))
+
+	// server处理逻辑
+}
 func ServerInterceptor(tracer opentracing.Tracer) grpc.UnaryServerInterceptor  {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (resp interface{}, err error) {
@@ -54,16 +104,18 @@ func ServerInterceptor(tracer opentracing.Tracer) grpc.UnaryServerInterceptor  {
 
 		//服务端拦截则是把在MD中的span提取出来
 		spanContext,err := tracer.Extract(opentracing.TextMap,MDReaderWriter{md})
+
 		if err != nil && err != opentracing.ErrSpanContextNotFound {
 			fmt.Println("extract from metadata error: ",err)
 		}else {
 			span := tracer.StartSpan(
 				info.FullMethod,
 				ext.RPCServerOption(spanContext),
-				opentracing.Tag{Key: string(ext.Component),Value: "gRPC"},
+				opentracing.Tag{Key: string(ext.Component),Value: "gRPC Server"},
 				ext.SpanKindRPCServer,
 				)
 			defer span.Finish()
+
 			ctx = opentracing.ContextWithSpan(ctx,span)
 		}
 
@@ -94,5 +146,27 @@ func (m MDReaderWriter) Set(key,val string) {
 	m.MD[key] = append(m.MD[key],val)
 }
 
+/*
+官方制定的carrier有两种，TextMapCarrier和HTTPHeadersCarrier
+// TextMapCarrier allows the use of regular map[string]string
+// as both TextMapWriter and TextMapReader.
+type TextMapCarrier map[string]string
 
+// HTTPHeadersCarrier satisfies both TextMapWriter and TextMapReader.
+//
+// Example usage for server side:
+//
+//     carrier := opentracing.HTTPHeadersCarrier(httpReq.Header)
+//     clientContext, err := tracer.Extract(opentracing.HTTPHeaders, carrier)
+//
+// Example usage for client side:
+//
+//     carrier := opentracing.HTTPHeadersCarrier(httpReq.Header)
+//     err := tracer.Inject(
+//         span.Context(),
+//         opentracing.HTTPHeaders,
+//         carrier)
+//
+type HTTPHeadersCarrier http.Header
+*/
 

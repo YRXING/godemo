@@ -37,7 +37,7 @@ func formatString2(ctx context.Context, helloTo string) string  {
 	opentracing.StartSpanFromContext()返回的第二个参数是子ctx
 	如果需要的话可以将该子ctx继续往下传递，而不是传递父ctx。
 	*/
-	//这里拿到的就是子span
+	//这里创建的span是ctx里面的子span
 	span, _ := opentracing.StartSpanFromContext(ctx,"formatString2")
 
 	defer span.Finish()

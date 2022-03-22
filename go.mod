@@ -7,6 +7,7 @@ require (
 	github.com/envoyproxy/go-control-plane v0.9.9-0.20210512163311-63b5d3c536b0
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/websocket v1.4.2
+	github.com/hashicorp/consul/api v1.12.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/libp2p/go-libp2p v0.17.0 // indirect
 	github.com/libp2p/go-libp2p-core v0.13.0 // indirect

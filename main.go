@@ -4,6 +4,10 @@ package main
 //	return a+b;
 //}
 import "C"
+import (
+	"fmt"
+	"time"
+)
 
 type stu struct {
 	Name string `json:"name"`
@@ -21,13 +25,7 @@ type People interface {
 	Info() string
 }
 func main() {
-	ch := make(chan struct{},1)
-	_,ok := <- ch
-	if ok {
-		println("aaaa")
-	} else {
-		println("ddd")
-	}
+	fmt.Println(time.Duration(10)*time.Second)
 }
 
 func libp2p()  {

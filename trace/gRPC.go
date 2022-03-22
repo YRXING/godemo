@@ -29,6 +29,7 @@ func ClientInterceptor(tracer opentracing.Tracer) grpc.UnaryClientInterceptor  {
 		}
 		span := tracer.StartSpan(
 			method,
+			//这里parentCtx是空的，不起作用
 			opentracing.ChildOf(parentCtx),
 			opentracing.Tag{Key: string(ext.Component),Value: "gRPC Client"},
 			ext.SpanKindRPCClient,
@@ -102,7 +103,7 @@ func ServerInterceptor(tracer opentracing.Tracer) grpc.UnaryServerInterceptor  {
 			md = metadata.New(nil)
 		}
 
-		//服务端拦截则是把在MD中的span提取出来
+		//服务端拦截则是把在MD中的span提取出来,这里记录了客户端传进来的span
 		spanContext,err := tracer.Extract(opentracing.TextMap,MDReaderWriter{md})
 
 		if err != nil && err != opentracing.ErrSpanContextNotFound {

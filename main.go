@@ -25,7 +25,7 @@ type People interface {
 	Info() string
 }
 func main() {
-	fmt.Println(time.Duration(10)*time.Second)
+	fmt.Println(time.Second)
 }
 
 func libp2p()  {

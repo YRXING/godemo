@@ -1,31 +1,17 @@
 package main
 
-//int add(int a,int b) {
-//	return a+b;
-//}
-import "C"
-import (
-	"fmt"
-	"time"
-)
+import "fmt"
 
-type stu struct {
-	Name string `json:"name"`
-	Age int
-}
-
-//func (s *stu) String() string {
-//	return "my name is "+s.Name
-//}
-
-func (s *stu) Info() string  {
-	return s.Name
-}
-type People interface {
-	Info() string
+func bkdrhash(s string) int {
+	seed := 131
+	hash := 0
+	for i := 0; i < len(s); i++ {
+		hash = hash*seed + int(s[i]);
+	}
+	return hash & 0x7FFFFFFF
 }
 func main() {
-	fmt.Println(time.Second)
+	fmt.Println(bkdrhash("rold=db;namespace=defaut"))
 }
 
 func libp2p()  {

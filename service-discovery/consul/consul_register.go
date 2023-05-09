@@ -87,6 +87,12 @@ func FindServiceByID(consulAddress,serviceID string) *api.AgentService {
 	}
 
 	service,_,err := client.Agent().Service(serviceID,nil)
+
+	//var lastIndex uint64
+	//client.Health().Service("serviceName","serviceTag",true,&api.QueryOptions{
+	//	WaitIndex: lastIndex,
+	//})
+
 	if err != nil {
 		return nil
 	}
